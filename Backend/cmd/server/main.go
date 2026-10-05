@@ -1,10 +1,11 @@
 package main
 
 import (
+	"os"
 	"log/slog"
 
-	"Backend/pkg/config"
-	"Backend/pkg/logger"
+	"pagetrack-backend/pkg/config"
+	"pagetrack-backend/pkg/logger"
 )
 
 func main() {
@@ -23,11 +24,10 @@ func main() {
 	}
 	defer cleanup()
 
-	slog.Info(
-		"Server booting...",
-		"env": cfg.Env,
-		"port": cfg.Port,
-		"log_level": cfg.LogLevel,
-		"log_path": cfg.LogPath
+	slog.Info("Server booting...",
+		"env", cfg.Env,
+		"port", cfg.Port,
+		"log_level", cfg.LogLevel,
+		"log_path", cfg.LogPath,
 	)
 }

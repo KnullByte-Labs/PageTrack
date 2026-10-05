@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 	"bufio"
+	"reflect"
 	"strings"
 	"strconv"
 )
@@ -73,7 +74,7 @@ func (c *Config) validate() error {
 func parseStruct(target any) error {
 	v := reflect.ValueOf(target)
 	if v.Kind() != reflect.Pointer || v.Elem().Kind() != reflect.Struct {
-		return fmt.Error("target must be a pointer to a struct")
+		return fmt.Errorf("target must be a pointer to a struct")
 	}
 
 	elem := v.Elem()
@@ -139,7 +140,7 @@ func setFieldValue(field reflect.Value, raw string) error {
 			}
 			field.SetUint(uintVal)
 		case reflect.Bool:
-			boolVar, err := strconv.ParseBool(raw)
+			boolVal, err := strconv.ParseBool(raw)
 			if err != nil {
 				return fmt.Errorf("invalid bool %q: %w", raw, err)
 			}
@@ -149,7 +150,7 @@ func setFieldValue(field reflect.Value, raw string) error {
 			if err != nil {
 				return fmt.Errorf("invalid float %q: %w", raw, err)
 			}
-			field.setFloat(floatVal)
+			field.SetFloat(floatVal)
 		default:
 			return fmt.Errorf("unsupported type %s", field.Type().String())
 	}
@@ -172,12 +173,12 @@ func loadDotEnv(filepath string) error {
 			continue
 		}
 
-		parts := strings.splitN(line, "=", 2)
+		parts := strings.SplitN(line, "=", 2)
 		if len(parts) == 2 {
 			key := strings.TrimSpace(parts[0])
 			val := strings.TrimSpace(parts[1])
 
-			val = strings.Trim(v, `"'`) // Remove quotations
+			val = strings.Trim(val, `"'`) // Remove quotations
 
 			if _, exists := os.LookupEnv(key); !exists {
 				_ = os.Setenv(key, val)

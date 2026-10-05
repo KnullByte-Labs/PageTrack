@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"path/filepath"
 
-	"Backend/pkg/config"
+	"pagetrack-backend/pkg/config"
 )
 
 // Configure Go's global default structured logger.
@@ -30,15 +30,15 @@ func Init() (func(), error) {
 	}
 
 	// Resolve output target
-	var output io.Writer = os.stdout
+	var output io.Writer = os.Stdout
 	var cleanup = func() {}
 
 	if cfg.LogPath != "" {
-		if err != os.MkdirAll(filepath.Dir(cfg.LogPath), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(cfg.LogPath), 0755); err != nil {
 			return nil, err
 		}
 
-		file, err := os.OpenFile(cfg.LogPath, os.O_CREATE|os.O_WRONGLY|os.O_APPEND, 0644)
+		file, err := os.OpenFile(cfg.LogPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
 			return nil, err
 		}
@@ -52,7 +52,7 @@ func Init() (func(), error) {
 	}
 
 	// Handler Options
-	opts := &slog.HanderOptions{
+	opts := &slog.HandlerOptions{
 		Level: level,
 		AddSource: true,
 		ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
@@ -63,7 +63,7 @@ func Init() (func(), error) {
 				}
 			}
 			return a
-		}
+		},
 	}
 
 	// Resolve handler format (JSON vs TEXT)
