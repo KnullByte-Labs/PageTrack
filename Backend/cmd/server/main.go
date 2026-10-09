@@ -4,6 +4,7 @@ import (
 	"os"
 	"log/slog"
 
+	"pagetrack-backend/internal/platform/database"
 	"pagetrack-backend/pkg/config"
 	"pagetrack-backend/pkg/logger"
 )
@@ -29,5 +30,19 @@ func main() {
 		"port", cfg.Port,
 		"log_level", cfg.LogLevel,
 		"log_path", cfg.LogPath,
+	)
+
+	// Initialize database connection pool
+	ctx := context.Background()
+	pool, err := database.NewPool(ctx, cfg)
+	if err != nil {
+		slog.Error("Failed to connect to database", "error", err)
+		os.Exit(1)
+	}
+	defer pool.Close()
+
+	slog.Info("Database connection pool established",
+		"max_conns", cfg.DBMaxConns,
+		"min_conns", cfg.DBMinConns,
 	)
 }

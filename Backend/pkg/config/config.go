@@ -188,3 +188,12 @@ func loadDotEnv(filepath string) error {
 
 	return scanner.Err()
 }
+
+// Generate the database connection string
+func (c *Config) DSN() string {
+	if strings.HasPrefix(c.DatabaseURL, "postgres://") || strings.HasPrefix(c.DatabaseURL, "postgresql://") {
+		return c.DatabaseURL
+	}
+
+	return fmt.Sprintf("postges://%s:%s@%s/%s?sslmode=disable", c.DatabaseUser, c.DatabasePass, c.DatabaseURL, c.DatabaseName)
+}
