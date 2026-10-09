@@ -8,7 +8,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"pagetrack-backend/pkg/config"
-	"pagetrack-backend/pkg/logger"
 )
 
 // Initialize and validate a new PostgreSQL connection pool
@@ -35,7 +34,7 @@ func NewPool(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {
 	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	if err := pool.Ping(pintCtx); err != nil {
+	if err := pool.Ping(pingCtx); err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("failed to ping database %w", err)
 	}
