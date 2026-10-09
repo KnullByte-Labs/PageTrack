@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:alpine
+    container_name: pagetrack_db
+    environment:
+      POSTGRES_USER: pagetrack_db
+      POSTGRES_PASSWORD: pagetrack_db
+      POSTGRES_DB: pagetrack_db
+    networks:
+      - pagetrack
+    ports:
+      - "5432:5432"
+    volumes:
+      - pagetrack_db:/var/lib/postgresql
+    restart: unless-stopped
+
+  adminer:
+    image: adminer:latest
+    container_name: pagetrack_adminer
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "8081:8080"
+    networks:
+      - pagetrack
+
+volumes:
+  pagetrack_db:
+
+networks:
+  pagetrack:
+
