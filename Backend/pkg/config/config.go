@@ -195,5 +195,5 @@ func (c *Config) DSN() string {
 		return c.DatabaseURL
 	}
 
-	return fmt.Sprintf("postges://%s:%s@%s/%s?sslmode=disable", c.DatabaseUser, c.DatabasePass, c.DatabaseURL, c.DatabaseName)
+	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", c.DatabaseUser, c.DatabasePass, c.DatabaseURL, c.DatabaseName)
 }
