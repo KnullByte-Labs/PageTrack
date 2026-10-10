@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"pagetrack-backend/internal/organizations"
 	"pagetrack-backend/internal/platform/database"
 	"pagetrack-backend/pkg/config"
 	"pagetrack-backend/pkg/logger"
@@ -34,8 +35,6 @@ func main() {
 	slog.Info("Server booting...",
 		"env", cfg.Env,
 		"port", cfg.Port,
-		"log_level", cfg.LogLevel,
-		"log_path", cfg.LogPath,
 	)
 
 	// Initialize database connection pool
@@ -52,6 +51,12 @@ func main() {
 		"min_conns", cfg.DBMinConns,
 	)
 
+	// Single sqlc Queries instance of shared pool
+	queries := database.New(pool)
+
+	// Initialize handler with shared queries
+	orgHandler := organizations.NewHandler(queries)
+
 	// Initialize chi Router
 	router := chi.NewRouter()
 	router.Use(middleware.RequestID)
@@ -63,6 +68,11 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status": "ok", "message": "pong"}`))
+	})
+
+	// Mount API v1 routes
+	router.Route("/api/v1", func(r chi.Router) {
+		r.Mount("/organizations", orgHandler.Routes())
 	})
 
 	// Start HTTP Server
