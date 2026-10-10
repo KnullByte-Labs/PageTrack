@@ -11,6 +11,102 @@ import (
 	"github.com/google/uuid"
 )
 
+const countPagesByProject = `-- name: CountPagesByProject :one
+SELECT COUNT(*) FROM pages WHERE project_id = $1 AND is_archived = FALSE
+`
+
+func (q *Queries) CountPagesByProject(ctx context.Context, projectID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countPagesByProject, projectID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countPagesBySection = `-- name: CountPagesBySection :one
+SELECT COUNT(*) FROM pages WHERE section_id = $1 AND is_archived = FALSE
+`
+
+func (q *Queries) CountPagesBySection(ctx context.Context, sectionID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countPagesBySection, sectionID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const createPage = `-- name: CreatePage :one
+INSERT INTO pages (
+    organization_id,
+    project_id,
+    section_id,
+    parent_id,
+    title,
+    slug,
+    path,
+    position,
+    created_by
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
+)
+RETURNING id, organization_id, project_id, section_id, parent_id, title, slug, path, position,
+current_published_version, has_draft, is_restricted, is_archived, created_by, created_at, updated_at
+`
+
+type CreatePageParams struct {
+	OrganizationID uuid.UUID  `db:"organization_id" json:"organizationId"`
+	ProjectID      uuid.UUID  `db:"project_id" json:"projectId"`
+	SectionID      uuid.UUID  `db:"section_id" json:"sectionId"`
+	ParentID       *uuid.UUID `db:"parent_id" json:"parentId"`
+	Title          string     `db:"title" json:"title"`
+	Slug           string     `db:"slug" json:"slug"`
+	Path           string     `db:"path" json:"path"`
+	Position       int32      `db:"position" json:"position"`
+	CreatedBy      uuid.UUID  `db:"created_by" json:"createdBy"`
+}
+
+func (q *Queries) CreatePage(ctx context.Context, arg CreatePageParams) (Page, error) {
+	row := q.db.QueryRow(ctx, createPage,
+		arg.OrganizationID,
+		arg.ProjectID,
+		arg.SectionID,
+		arg.ParentID,
+		arg.Title,
+		arg.Slug,
+		arg.Path,
+		arg.Position,
+		arg.CreatedBy,
+	)
+	var i Page
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.ProjectID,
+		&i.SectionID,
+		&i.ParentID,
+		&i.Title,
+		&i.Slug,
+		&i.Path,
+		&i.Position,
+		&i.CurrentPublishedVersion,
+		&i.HasDraft,
+		&i.IsRestricted,
+		&i.IsArchived,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const deletePage = `-- name: DeletePage :exec
+DELETE FROM pages
+WHERE id = $1
+`
+
+func (q *Queries) DeletePage(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deletePage, id)
+	return err
+}
+
 const getPageByID = `-- name: GetPageByID :one
 SELECT id, organization_id, project_id, section_id, parent_id, title, slug, path, position,
 current_published_version, has_draft, is_restricted, is_archived, created_by, created_at, updated_at
@@ -46,12 +142,19 @@ const listPagesByProject = `-- name: ListPagesByProject :many
 SELECT id, organization_id, project_id, section_id, parent_id, title, slug, path, position,
 current_published_version, has_draft, is_restricted, is_archived, created_by, created_at, updated_at
 FROM pages
-WHERE project_id = $1
-ORDER BY position ASC
+WHERE project_id = $1 AND is_archived = FALSE
+ORDER BY position ASC, title ASC
+LIMIT $2 OFFSET $3
 `
 
-func (q *Queries) ListPagesByProject(ctx context.Context, projectID uuid.UUID) ([]Page, error) {
-	rows, err := q.db.Query(ctx, listPagesByProject, projectID)
+type ListPagesByProjectParams struct {
+	ProjectID uuid.UUID `db:"project_id" json:"projectId"`
+	Limit     int32     `db:"limit" json:"limit"`
+	Offset    int32     `db:"offset" json:"offset"`
+}
+
+func (q *Queries) ListPagesByProject(ctx context.Context, arg ListPagesByProjectParams) ([]Page, error) {
+	rows, err := q.db.Query(ctx, listPagesByProject, arg.ProjectID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -85,4 +188,107 @@ func (q *Queries) ListPagesByProject(ctx context.Context, projectID uuid.UUID) (
 		return nil, err
 	}
 	return items, nil
+}
+
+const listPagesBySection = `-- name: ListPagesBySection :many
+SELECT id, organization_id, project_id, section_id, parent_id, title, slug, path, position,
+current_published_version, has_draft, is_restricted, is_archived, created_by, created_at, updated_at
+FROM pages
+WHERE section_id = $1 AND is_archived = FALSE
+ORDER BY position ASC, title ASC
+LIMIT $2 OFFSET $3
+`
+
+type ListPagesBySectionParams struct {
+	SectionID uuid.UUID `db:"section_id" json:"sectionId"`
+	Limit     int32     `db:"limit" json:"limit"`
+	Offset    int32     `db:"offset" json:"offset"`
+}
+
+func (q *Queries) ListPagesBySection(ctx context.Context, arg ListPagesBySectionParams) ([]Page, error) {
+	rows, err := q.db.Query(ctx, listPagesBySection, arg.SectionID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Page
+	for rows.Next() {
+		var i Page
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrganizationID,
+			&i.ProjectID,
+			&i.SectionID,
+			&i.ParentID,
+			&i.Title,
+			&i.Slug,
+			&i.Path,
+			&i.Position,
+			&i.CurrentPublishedVersion,
+			&i.HasDraft,
+			&i.IsRestricted,
+			&i.IsArchived,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updatePage = `-- name: UpdatePage :one
+UPDATE pages
+SET
+    title = COALESCE($2, title),
+    position = COALESCE($3, position),
+    is_archived = COALESCE($4, is_archived),
+    is_restricted = COALESCE($5, is_restricted),
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING id, organization_id, project_id, section_id, parent_id, title, slug, path, position,
+current_published_version, has_draft, is_restricted, is_archived, created_by, created_at, updated_at
+`
+
+type UpdatePageParams struct {
+	ID           uuid.UUID `db:"id" json:"id"`
+	Title        string    `db:"title" json:"title"`
+	Position     int32     `db:"position" json:"position"`
+	IsArchived   bool      `db:"is_archived" json:"isArchived"`
+	IsRestricted bool      `db:"is_restricted" json:"isRestricted"`
+}
+
+func (q *Queries) UpdatePage(ctx context.Context, arg UpdatePageParams) (Page, error) {
+	row := q.db.QueryRow(ctx, updatePage,
+		arg.ID,
+		arg.Title,
+		arg.Position,
+		arg.IsArchived,
+		arg.IsRestricted,
+	)
+	var i Page
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.ProjectID,
+		&i.SectionID,
+		&i.ParentID,
+		&i.Title,
+		&i.Slug,
+		&i.Path,
+		&i.Position,
+		&i.CurrentPublishedVersion,
+		&i.HasDraft,
+		&i.IsRestricted,
+		&i.IsArchived,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

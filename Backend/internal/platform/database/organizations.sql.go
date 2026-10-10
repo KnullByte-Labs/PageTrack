@@ -12,6 +12,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countOrganizations = `-- name: CountOrganizations :one
+SELECT COUNT(*) FROM organizations
+`
+
+func (q *Queries) CountOrganizations(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countOrganizations)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createOrganization = `-- name: CreateOrganization :one
 INSERT INTO organizations (
     slug,
@@ -69,6 +80,16 @@ func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganization
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const deleteOrganization = `-- name: DeleteOrganization :exec
+DELETE FROM organizations
+WHERE id = $1
+`
+
+func (q *Queries) DeleteOrganization(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteOrganization, id)
+	return err
 }
 
 const getOrganizationByID = `-- name: GetOrganizationByID :one
@@ -145,7 +166,13 @@ const listOrganizations = `-- name: ListOrganizations :many
 SELECT id, slug, name, display_name, image_url, live_url, description, created_at, updated_at
 FROM organizations
 ORDER BY name ASC
+LIMIT $1 OFFSET $2
 `
+
+type ListOrganizationsParams struct {
+	Limit  int32 `db:"limit" json:"limit"`
+	Offset int32 `db:"offset" json:"offset"`
+}
 
 type ListOrganizationsRow struct {
 	ID          uuid.UUID          `db:"id" json:"id"`
@@ -159,8 +186,8 @@ type ListOrganizationsRow struct {
 	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updatedAt"`
 }
 
-func (q *Queries) ListOrganizations(ctx context.Context) ([]ListOrganizationsRow, error) {
-	rows, err := q.db.Query(ctx, listOrganizations)
+func (q *Queries) ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]ListOrganizationsRow, error) {
+	rows, err := q.db.Query(ctx, listOrganizations, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

@@ -11,7 +11,11 @@ WHERE slug = $1;
 -- name: ListOrganizations :many
 SELECT id, slug, name, display_name, image_url, live_url, description, created_at, updated_at
 FROM organizations
-ORDER BY name ASC;
+ORDER BY name ASC
+LIMIT $1 OFFSET $2;
+
+-- name: CountOrganizations :one
+SELECT COUNT(*) FROM organizations;
 
 -- name: CreateOrganization :one
 INSERT INTO organizations (
@@ -37,3 +41,7 @@ SET
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING id, slug, name, display_name, image_url, live_url, description, created_at, updated_at;
+
+-- name: DeleteOrganization :exec
+DELETE FROM organizations
+WHERE id = $1;

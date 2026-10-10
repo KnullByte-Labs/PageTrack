@@ -28,3 +28,25 @@ func (req *CreateOrganizationRequest) Validate() error {
 
 	return nil
 }
+
+type UpdateOrganizationRequest struct {
+	Name        *string `json:"name,omitempty"`
+	DisplayName *string `json:"displayName,omitempty"`
+	ImageUrl    *string `json:"imageUrl,omitempty"`
+	LiveUrl     *string `json:"liveUrl,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
+func (req *UpdateOrganizationRequest) Validate() error {
+	if req.Name != nil {
+		trimmed := strings.TrimSpace(*req.Name)
+
+		if trimmed == "" {
+			return errors.New("name cannot be empty")
+		}
+
+		req.Name = &trimmed
+	}
+
+	return nil
+}

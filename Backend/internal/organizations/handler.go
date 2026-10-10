@@ -6,6 +6,8 @@ import (
 	"net/http"
 	
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 
 	"pagetrack-backend/internal/platform/database"
@@ -30,6 +32,8 @@ func (h *Handler) Routes() chi.Router {
 
 	router.Get("/", h.List)
 	router.Post("/", h.Create)
+	router.Get("/{id}", h.GetByID)
+	router.Get("/slug/{slug}", h.GetBySlug)
 
 	return router
 }
@@ -38,19 +42,27 @@ func (h *Handler) Routes() chi.Router {
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Fetching all organizations...")
 
-	orgs, err := h.queries.ListOrganizations(r.Context())
+	limit, offset, page := httputil.ParsePagination(r)
+
+	total, err := h.queries.CountOrganizations(r.Context())
+	if err != nil {
+		slog.Error("Failed to count organizations", "error", err)
+		httputil.RespondError(w, http.StatusInternalServerError, "failed to list organizations")
+		return
+	}
+
+	orgs, err := h.queries.ListOrganizations(r.Context(), database.ListOrganizationsParams{
+		Limit: limit,
+		Offset: offset,
+	})
 	if err != nil {
 		slog.Error("Failed to list organizations", "error", err)
 		httputil.RespondError(w, http.StatusInternalServerError, "failed to list organizations")
 		return
 	}
 
-	if orgs == nil {
-		orgs = []database.ListOrganizationsRow{}
-	}
-
 	slog.Info("Fetched all organization info")
-	httputil.RespondJSON(w, http.StatusOK, orgs)
+	httputil.RespondPaginatedJSON(w, http.StatusOK, orgs, total, page, limit)
 }
 
 // handles POST /api/v1/organizations
@@ -100,4 +112,48 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("Organization created", "id", org.ID, "slug", org.Slug)
 	httputil.RespondJSON(w, http.StatusCreated, org)
+}
+
+// handles GET /api/v1/organizations/{id}
+func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		httputil.RespondError(w, http.StatusBadRequest, "invalid organization id")
+		return
+	}
+
+	org, err := h.queries.GetOrganizationByID(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			httputil.RespondError(w, http.StatusNotFound, "organization not found")
+			return
+		}
+
+		slog.Error("Failed to fetch organization", "error", err, "id", id)
+		httputil.RespondError(w, http.StatusInternalServerError, "failed to fetch organization")
+		return
+	}
+
+	slog.Info("Found organzation by ID", "id", id)
+	httputil.RespondJSON(w, http.StatusOK, org)
+}
+
+// handles GET /api/v1/organizations/slug/{slug}
+func (h *Handler) GetBySlug(w http.ResponseWriter, r *http.Request) {
+	slug := chi.URLParam(r, "slug")
+
+	org, err := h.queries.GetOrganizationBySlug(r.Context(), slug)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			httputil.RespondError(w, http.StatusNotFound, "organization not found")
+			return
+		}
+
+		slog.Error("Failed to fetch organization by slug", "error", err, "slug", slug)
+		httputil.RespondError(w, http.StatusInternalServerError, "failed to fetch organization")
+		return
+	}
+
+	slog.Info("Found organization by slug", "slug", slug)
+	httputil.RespondJSON(w, http.StatusOK, org)
 }
