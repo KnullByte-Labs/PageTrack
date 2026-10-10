@@ -2,8 +2,13 @@ package main
 
 import (
 	"os"
+	"fmt"
 	"context"
 	"log/slog"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 
 	"pagetrack-backend/internal/platform/database"
 	"pagetrack-backend/pkg/config"
@@ -46,4 +51,26 @@ func main() {
 		"max_conns", cfg.DBMaxConns,
 		"min_conns", cfg.DBMinConns,
 	)
+
+	// Initialize chi Router
+	router := chi.NewRouter()
+	router.Use(middleware.RequestID)
+	router.Use(middleware.RealIP)
+	router.Use(middleware.Recoverer)
+
+	// Ping endpoint
+	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status": "ok", "message": "pong"}`))
+	})
+
+	// Start HTTP Server
+	serverAddr := fmt.Sprintf(":%d", cfg.Port)
+	slog.Info("Server listening", "addr", serverAddr)
+
+	if err := http.ListenAndServe(serverAddr, router); err != nil && err != http.ErrServerClosed {
+		slog.Error("Server failed to start", "error", err)
+		os.Exit(1)
+	}
 }
