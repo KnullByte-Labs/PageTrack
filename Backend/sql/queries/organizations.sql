@@ -33,11 +33,11 @@ RETURNING id, slug, name, display_name, image_url, live_url, description, create
 -- name: UpdateOrganization :one
 UPDATE organizations
 SET
-    name = COALESCE($2, name),
-    display_name = COALESCE($3, display_name),
-    image_url = COALESCE($4, image_url),
-    live_url = COALESCE($5, live_url),
-    description = COALESCE($6, description),
+    name = COALESCE(sqlc.narg('name'), name),
+    display_name = COALESCE(sqlc.narg('display_name'), display_name),
+    image_url = COALESCE(sqlc.narg('image_url'), image_url),
+    live_url = COALESCE(sqlc.narg('live_url'), live_url),
+    description = COALESCE(sqlc.narg('description'), description),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING id, slug, name, display_name, image_url, live_url, description, created_at, updated_at;

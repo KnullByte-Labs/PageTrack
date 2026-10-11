@@ -34,6 +34,7 @@ func (h *Handler) Routes() chi.Router {
 	router.Post("/", h.Create)
 	router.Get("/{id}", h.GetByID)
 	router.Get("/slug/{slug}", h.GetBySlug)
+	router.Patch("/{id}", h.Update)
 
 	return router
 }
@@ -155,5 +156,48 @@ func (h *Handler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slog.Info("Found organization by slug", "slug", slug)
+	httputil.RespondJSON(w, http.StatusOK, org)
+}
+
+// handles PATCH /api/v1/organizations/{id}
+func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		httputil.RespondError(w, http.StatusBadRequest, "invalid organization id")
+		return
+	}
+
+	var req UpdateOrganizationRequest
+	if err := httputil.DecodeJSON(r, &req); err != nil {
+		httputil.RespondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := req.Validate(); err != nil {
+		httputil.RespondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	
+	params := database.UpdateOrganizationParams{
+		ID:          id,
+		Name:        req.Name,
+		DisplayName: req.DisplayName,
+		ImageUrl:    req.ImageUrl,
+		LiveUrl:     req.LiveUrl,
+		Description: req.Description,
+	}
+
+	org, err := h.queries.UpdateOrganization(r.Context(), params)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			httputil.RespondError(w, http.StatusNotFound, "organization not found")
+			return
+		}
+
+		slog.Error("Failed to update organization details", "error", err, "id", id)
+		httputil.RespondError(w, http.StatusInternalServerError, "failed to update organization")
+		return
+	}
+
 	httputil.RespondJSON(w, http.StatusOK, org)
 }

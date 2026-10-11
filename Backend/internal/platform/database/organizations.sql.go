@@ -231,7 +231,7 @@ RETURNING id, slug, name, display_name, image_url, live_url, description, create
 
 type UpdateOrganizationParams struct {
 	ID          uuid.UUID `db:"id" json:"id"`
-	Name        string    `db:"name" json:"name"`
+	Name        *string   `db:"name" json:"name"`
 	DisplayName *string   `db:"display_name" json:"displayName"`
 	ImageUrl    *string   `db:"image_url" json:"imageUrl"`
 	LiveUrl     *string   `db:"live_url" json:"liveUrl"`
