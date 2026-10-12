@@ -40,7 +40,7 @@ func (h *Handler) Routes() chi.Router {
 	return router
 }
 
-// handles GET /api/v1/teams
+// handles GET /api/v1/teams?org_id={org_id}
 func (h *Handler) ListByOrg(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Listing all teams by organization")
 
@@ -118,7 +118,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	httputil.RespondJSON(w, http.StatusCreated, team)
 }
 
-// handles GET /api/v1/teams/{id}
+// handles GET /api/v1/teams/{id}?org_id={org_id}
 func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Fetching team info by ID")
 
@@ -241,7 +241,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	httputil.RespondJSON(w, http.StatusOK, team)
 }
 
-// handles DELETE /api/v1/teams/{id}
+// handles DELETE /api/v1/teams/{id}?org_id={org_id}
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Initiating deletion of a team")
 
