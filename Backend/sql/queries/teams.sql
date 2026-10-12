@@ -1,7 +1,7 @@
 -- name: GetTeamByID :one
 SELECT id, organization_id, name, slug, idp_group_path, created_at, updated_at
 FROM teams
-WHERE id = $1;
+WHERE id = $1 AND organization_id = $2;
 
 -- name: GetTeamBySlug :one
 SELECT id, organization_id, name, slug, idp_group_path, created_at, updated_at
@@ -32,12 +32,12 @@ RETURNING id, organization_id, name, slug, idp_group_path, created_at, updated_a
 -- name: UpdateTeam :one
 UPDATE teams
 SET
-    name = COALESCE($2, name),
-    idp_group_path = COALESCE($3, idp_group_path),
+    name = COALESCE(sqlc.narg('name'), name),
+    idp_group_path = COALESCE(sqlc.narg('idp_group_path'), idp_group_path),
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
+WHERE id = $1 AND organization_id = $2
 RETURNING id, organization_id, name, slug, idp_group_path, created_at, updated_at;
 
 -- name: DeleteTeam :exec
 DELETE FROM teams
-WHERE id = $1;
+WHERE id = $1 AND organization_id = $2;

@@ -17,6 +17,10 @@ CREATE TABLE organizations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     slug VARCHAR(64) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
+    display_name VARCHAR(255),
+    image_url TEXT,
+    live_url TEXT,
+    description TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

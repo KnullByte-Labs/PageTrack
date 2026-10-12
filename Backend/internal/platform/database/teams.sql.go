@@ -63,22 +63,32 @@ func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, e
 
 const deleteTeam = `-- name: DeleteTeam :exec
 DELETE FROM teams
-WHERE id = $1
+WHERE id = $1 AND organization_id = $2
 `
 
-func (q *Queries) DeleteTeam(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteTeam, id)
+type DeleteTeamParams struct {
+	ID             uuid.UUID `db:"id" json:"id"`
+	OrganizationID uuid.UUID `db:"organization_id" json:"organizationId"`
+}
+
+func (q *Queries) DeleteTeam(ctx context.Context, arg DeleteTeamParams) error {
+	_, err := q.db.Exec(ctx, deleteTeam, arg.ID, arg.OrganizationID)
 	return err
 }
 
 const getTeamByID = `-- name: GetTeamByID :one
 SELECT id, organization_id, name, slug, idp_group_path, created_at, updated_at
 FROM teams
-WHERE id = $1
+WHERE id = $1 AND organization_id = $2
 `
 
-func (q *Queries) GetTeamByID(ctx context.Context, id uuid.UUID) (Team, error) {
-	row := q.db.QueryRow(ctx, getTeamByID, id)
+type GetTeamByIDParams struct {
+	ID             uuid.UUID `db:"id" json:"id"`
+	OrganizationID uuid.UUID `db:"organization_id" json:"organizationId"`
+}
+
+func (q *Queries) GetTeamByID(ctx context.Context, arg GetTeamByIDParams) (Team, error) {
+	row := q.db.QueryRow(ctx, getTeamByID, arg.ID, arg.OrganizationID)
 	var i Team
 	err := row.Scan(
 		&i.ID,
@@ -163,21 +173,27 @@ func (q *Queries) ListTeamsByOrg(ctx context.Context, arg ListTeamsByOrgParams) 
 const updateTeam = `-- name: UpdateTeam :one
 UPDATE teams
 SET
-    name = COALESCE($2, name),
-    idp_group_path = COALESCE($3, idp_group_path),
+    name = COALESCE($3, name),
+    idp_group_path = COALESCE($4, idp_group_path),
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
+WHERE id = $1 AND organization_id = $2
 RETURNING id, organization_id, name, slug, idp_group_path, created_at, updated_at
 `
 
 type UpdateTeamParams struct {
-	ID           uuid.UUID `db:"id" json:"id"`
-	Name         string    `db:"name" json:"name"`
-	IdpGroupPath *string   `db:"idp_group_path" json:"idpGroupPath"`
+	ID             uuid.UUID `db:"id" json:"id"`
+	OrganizationID uuid.UUID `db:"organization_id" json:"organizationId"`
+	Name           *string   `db:"name" json:"name"`
+	IdpGroupPath   *string   `db:"idp_group_path" json:"idpGroupPath"`
 }
 
 func (q *Queries) UpdateTeam(ctx context.Context, arg UpdateTeamParams) (Team, error) {
-	row := q.db.QueryRow(ctx, updateTeam, arg.ID, arg.Name, arg.IdpGroupPath)
+	row := q.db.QueryRow(ctx, updateTeam,
+		arg.ID,
+		arg.OrganizationID,
+		arg.Name,
+		arg.IdpGroupPath,
+	)
 	var i Team
 	err := row.Scan(
 		&i.ID,
