@@ -9,7 +9,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const countOrganizations = `-- name: CountOrganizations :one
@@ -46,19 +45,7 @@ type CreateOrganizationParams struct {
 	Description *string `db:"description" json:"description"`
 }
 
-type CreateOrganizationRow struct {
-	ID          uuid.UUID          `db:"id" json:"id"`
-	Slug        string             `db:"slug" json:"slug"`
-	Name        string             `db:"name" json:"name"`
-	DisplayName *string            `db:"display_name" json:"displayName"`
-	ImageUrl    *string            `db:"image_url" json:"imageUrl"`
-	LiveUrl     *string            `db:"live_url" json:"liveUrl"`
-	Description *string            `db:"description" json:"description"`
-	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"createdAt"`
-	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updatedAt"`
-}
-
-func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (CreateOrganizationRow, error) {
+func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error) {
 	row := q.db.QueryRow(ctx, createOrganization,
 		arg.Slug,
 		arg.Name,
@@ -67,7 +54,7 @@ func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganization
 		arg.LiveUrl,
 		arg.Description,
 	)
-	var i CreateOrganizationRow
+	var i Organization
 	err := row.Scan(
 		&i.ID,
 		&i.Slug,
@@ -98,21 +85,9 @@ FROM organizations
 WHERE id = $1
 `
 
-type GetOrganizationByIDRow struct {
-	ID          uuid.UUID          `db:"id" json:"id"`
-	Slug        string             `db:"slug" json:"slug"`
-	Name        string             `db:"name" json:"name"`
-	DisplayName *string            `db:"display_name" json:"displayName"`
-	ImageUrl    *string            `db:"image_url" json:"imageUrl"`
-	LiveUrl     *string            `db:"live_url" json:"liveUrl"`
-	Description *string            `db:"description" json:"description"`
-	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"createdAt"`
-	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updatedAt"`
-}
-
-func (q *Queries) GetOrganizationByID(ctx context.Context, id uuid.UUID) (GetOrganizationByIDRow, error) {
+func (q *Queries) GetOrganizationByID(ctx context.Context, id uuid.UUID) (Organization, error) {
 	row := q.db.QueryRow(ctx, getOrganizationByID, id)
-	var i GetOrganizationByIDRow
+	var i Organization
 	err := row.Scan(
 		&i.ID,
 		&i.Slug,
@@ -133,21 +108,9 @@ FROM organizations
 WHERE slug = $1
 `
 
-type GetOrganizationBySlugRow struct {
-	ID          uuid.UUID          `db:"id" json:"id"`
-	Slug        string             `db:"slug" json:"slug"`
-	Name        string             `db:"name" json:"name"`
-	DisplayName *string            `db:"display_name" json:"displayName"`
-	ImageUrl    *string            `db:"image_url" json:"imageUrl"`
-	LiveUrl     *string            `db:"live_url" json:"liveUrl"`
-	Description *string            `db:"description" json:"description"`
-	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"createdAt"`
-	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updatedAt"`
-}
-
-func (q *Queries) GetOrganizationBySlug(ctx context.Context, slug string) (GetOrganizationBySlugRow, error) {
+func (q *Queries) GetOrganizationBySlug(ctx context.Context, slug string) (Organization, error) {
 	row := q.db.QueryRow(ctx, getOrganizationBySlug, slug)
-	var i GetOrganizationBySlugRow
+	var i Organization
 	err := row.Scan(
 		&i.ID,
 		&i.Slug,
@@ -174,27 +137,15 @@ type ListOrganizationsParams struct {
 	Offset int32 `db:"offset" json:"offset"`
 }
 
-type ListOrganizationsRow struct {
-	ID          uuid.UUID          `db:"id" json:"id"`
-	Slug        string             `db:"slug" json:"slug"`
-	Name        string             `db:"name" json:"name"`
-	DisplayName *string            `db:"display_name" json:"displayName"`
-	ImageUrl    *string            `db:"image_url" json:"imageUrl"`
-	LiveUrl     *string            `db:"live_url" json:"liveUrl"`
-	Description *string            `db:"description" json:"description"`
-	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"createdAt"`
-	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updatedAt"`
-}
-
-func (q *Queries) ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]ListOrganizationsRow, error) {
+func (q *Queries) ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error) {
 	rows, err := q.db.Query(ctx, listOrganizations, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListOrganizationsRow
+	var items []Organization
 	for rows.Next() {
-		var i ListOrganizationsRow
+		var i Organization
 		if err := rows.Scan(
 			&i.ID,
 			&i.Slug,
@@ -238,19 +189,7 @@ type UpdateOrganizationParams struct {
 	Description *string   `db:"description" json:"description"`
 }
 
-type UpdateOrganizationRow struct {
-	ID          uuid.UUID          `db:"id" json:"id"`
-	Slug        string             `db:"slug" json:"slug"`
-	Name        string             `db:"name" json:"name"`
-	DisplayName *string            `db:"display_name" json:"displayName"`
-	ImageUrl    *string            `db:"image_url" json:"imageUrl"`
-	LiveUrl     *string            `db:"live_url" json:"liveUrl"`
-	Description *string            `db:"description" json:"description"`
-	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"createdAt"`
-	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updatedAt"`
-}
-
-func (q *Queries) UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (UpdateOrganizationRow, error) {
+func (q *Queries) UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error) {
 	row := q.db.QueryRow(ctx, updateOrganization,
 		arg.ID,
 		arg.Name,
@@ -259,7 +198,7 @@ func (q *Queries) UpdateOrganization(ctx context.Context, arg UpdateOrganization
 		arg.LiveUrl,
 		arg.Description,
 	)
-	var i UpdateOrganizationRow
+	var i Organization
 	err := row.Scan(
 		&i.ID,
 		&i.Slug,

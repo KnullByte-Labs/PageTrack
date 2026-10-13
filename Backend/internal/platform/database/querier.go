@@ -16,7 +16,7 @@ type Querier interface {
 	CountPagesBySection(ctx context.Context, sectionID uuid.UUID) (int64, error)
 	CountProjectsByOrg(ctx context.Context, organizationID uuid.UUID) (int64, error)
 	CountTeamsByOrg(ctx context.Context, organizationID uuid.UUID) (int64, error)
-	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (CreateOrganizationRow, error)
+	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error)
 	CreatePage(ctx context.Context, arg CreatePageParams) (Page, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateSection(ctx context.Context, arg CreateSectionParams) (Section, error)
@@ -25,22 +25,22 @@ type Querier interface {
 	DeletePage(ctx context.Context, id uuid.UUID) error
 	DeleteProject(ctx context.Context, id uuid.UUID) error
 	DeleteSection(ctx context.Context, id uuid.UUID) error
-	DeleteTeam(ctx context.Context, id uuid.UUID) error
-	GetOrganizationByID(ctx context.Context, id uuid.UUID) (GetOrganizationByIDRow, error)
-	GetOrganizationBySlug(ctx context.Context, slug string) (GetOrganizationBySlugRow, error)
+	DeleteTeam(ctx context.Context, arg DeleteTeamParams) error
+	GetOrganizationByID(ctx context.Context, id uuid.UUID) (Organization, error)
+	GetOrganizationBySlug(ctx context.Context, slug string) (Organization, error)
 	GetPageByID(ctx context.Context, id uuid.UUID) (Page, error)
 	GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetProjectBySlug(ctx context.Context, arg GetProjectBySlugParams) (Project, error)
 	GetSectionByID(ctx context.Context, id uuid.UUID) (Section, error)
-	GetTeamByID(ctx context.Context, id uuid.UUID) (Team, error)
+	GetTeamByID(ctx context.Context, arg GetTeamByIDParams) (Team, error)
 	GetTeamBySlug(ctx context.Context, arg GetTeamBySlugParams) (Team, error)
-	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]ListOrganizationsRow, error)
+	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)
 	ListPagesByProject(ctx context.Context, arg ListPagesByProjectParams) ([]Page, error)
 	ListPagesBySection(ctx context.Context, arg ListPagesBySectionParams) ([]Page, error)
 	ListProjectsByOrg(ctx context.Context, arg ListProjectsByOrgParams) ([]Project, error)
 	ListSectionsByProject(ctx context.Context, projectID uuid.UUID) ([]Section, error)
 	ListTeamsByOrg(ctx context.Context, arg ListTeamsByOrgParams) ([]Team, error)
-	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (UpdateOrganizationRow, error)
+	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)
 	UpdatePage(ctx context.Context, arg UpdatePageParams) (Page, error)
 	UpdateProject(ctx context.Context, arg UpdateProjectParams) (Project, error)
 	UpdateSection(ctx context.Context, arg UpdateSectionParams) (Section, error)

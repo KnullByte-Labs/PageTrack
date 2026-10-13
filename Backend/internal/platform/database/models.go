@@ -33,12 +33,12 @@ type Organization struct {
 	ID          uuid.UUID          `db:"id" json:"id"`
 	Slug        string             `db:"slug" json:"slug"`
 	Name        string             `db:"name" json:"name"`
-	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"createdAt"`
-	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updatedAt"`
 	DisplayName *string            `db:"display_name" json:"displayName"`
 	ImageUrl    *string            `db:"image_url" json:"imageUrl"`
 	LiveUrl     *string            `db:"live_url" json:"liveUrl"`
 	Description *string            `db:"description" json:"description"`
+	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"createdAt"`
+	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updatedAt"`
 }
 
 type OrganizationMember struct {
