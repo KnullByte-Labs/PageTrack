@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"pagetrack-backend/internal/organizations"
+	"pagetrack-backend/internal/projects"
 	"pagetrack-backend/internal/teams"
 
 	"pagetrack-backend/internal/platform/database"
@@ -58,6 +59,7 @@ func main() {
 
 	// Initialize handler with shared queries
 	orgHandler := organizations.NewHandler(queries)
+	projectHandler := projects.NewHandler(queries)
 	teamHandler := teams.NewHandler(queries)
 
 	// Initialize chi Router
@@ -76,6 +78,7 @@ func main() {
 	// Mount API v1 routes
 	router.Route("/api/v1", func(r chi.Router) {
 		r.Mount("/organizations", orgHandler.Routes())
+		r.Mount("/projects", projectHandler.Routes())
 		r.Mount("/teams", teamHandler.Routes())
 	})
 

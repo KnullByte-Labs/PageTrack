@@ -1,7 +1,7 @@
 -- name: GetProjectByID :one
 SELECT id, organization_id, team_id, name, slug, description, visibility, is_archived, created_at, updated_at
 FROM projects
-WHERE id = $1;
+WHERE id = $1 AND organization_id = $2;
 
 -- name: GetProjectBySlug :one
 SELECT id, organization_id, team_id, name, slug, description, visibility, is_archived, created_at, updated_at
@@ -34,15 +34,15 @@ RETURNING id, organization_id, team_id, name, slug, description, visibility, is_
 -- name: UpdateProject :one
 UPDATE projects
 SET
-    name = COALESCE($2, name),
-    description = COALESCE($3, description),
-    visibility = COALESCE($4, visibility),
-    team_id = COALESCE($5, team_id),
-    is_archived = COALESCE($6, is_archived),
+    name = COALESCE(sqlc.narg('name'), name),
+    description = COALESCE(sqlc.narg('description'), description),
+    visibility = COALESCE(sqlc.narg('visibility'), visibility),
+    team_id = COALESCE(sqlc.narg('team_id'), team_id),
+    is_archived = COALESCE(sqlc.narg('is_archived'), is_archived),
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
+WHERE id = $1 AND organization_id = $2
 RETURNING id, organization_id, team_id, name, slug, description, visibility, is_archived, created_at, updated_at;
 
 -- name: DeleteProject :exec
 DELETE FROM projects
-WHERE id = $1;
+WHERE id = $1 AND organization_id = $2;
