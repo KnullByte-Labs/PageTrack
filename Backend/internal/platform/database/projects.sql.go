@@ -72,22 +72,32 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 
 const deleteProject = `-- name: DeleteProject :exec
 DELETE FROM projects
-WHERE id = $1
+WHERE id = $1 AND organization_id = $2
 `
 
-func (q *Queries) DeleteProject(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteProject, id)
+type DeleteProjectParams struct {
+	ID             uuid.UUID `db:"id" json:"id"`
+	OrganizationID uuid.UUID `db:"organization_id" json:"organizationId"`
+}
+
+func (q *Queries) DeleteProject(ctx context.Context, arg DeleteProjectParams) error {
+	_, err := q.db.Exec(ctx, deleteProject, arg.ID, arg.OrganizationID)
 	return err
 }
 
 const getProjectByID = `-- name: GetProjectByID :one
 SELECT id, organization_id, team_id, name, slug, description, visibility, is_archived, created_at, updated_at
 FROM projects
-WHERE id = $1
+WHERE id = $1 AND organization_id = $2
 `
 
-func (q *Queries) GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error) {
-	row := q.db.QueryRow(ctx, getProjectByID, id)
+type GetProjectByIDParams struct {
+	ID             uuid.UUID `db:"id" json:"id"`
+	OrganizationID uuid.UUID `db:"organization_id" json:"organizationId"`
+}
+
+func (q *Queries) GetProjectByID(ctx context.Context, arg GetProjectByIDParams) (Project, error) {
+	row := q.db.QueryRow(ctx, getProjectByID, arg.ID, arg.OrganizationID)
 	var i Project
 	err := row.Scan(
 		&i.ID,
@@ -181,28 +191,30 @@ func (q *Queries) ListProjectsByOrg(ctx context.Context, arg ListProjectsByOrgPa
 const updateProject = `-- name: UpdateProject :one
 UPDATE projects
 SET
-    name = COALESCE($2, name),
-    description = COALESCE($3, description),
-    visibility = COALESCE($4, visibility),
-    team_id = COALESCE($5, team_id),
-    is_archived = COALESCE($6, is_archived),
+    name = COALESCE($3, name),
+    description = COALESCE($4, description),
+    visibility = COALESCE($5, visibility),
+    team_id = COALESCE($6, team_id),
+    is_archived = COALESCE($7, is_archived),
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
+WHERE id = $1 AND organization_id = $2
 RETURNING id, organization_id, team_id, name, slug, description, visibility, is_archived, created_at, updated_at
 `
 
 type UpdateProjectParams struct {
-	ID          uuid.UUID  `db:"id" json:"id"`
-	Name        string     `db:"name" json:"name"`
-	Description *string    `db:"description" json:"description"`
-	Visibility  string     `db:"visibility" json:"visibility"`
-	TeamID      *uuid.UUID `db:"team_id" json:"teamId"`
-	IsArchived  bool       `db:"is_archived" json:"isArchived"`
+	ID             uuid.UUID  `db:"id" json:"id"`
+	OrganizationID uuid.UUID  `db:"organization_id" json:"organizationId"`
+	Name           *string    `db:"name" json:"name"`
+	Description    *string    `db:"description" json:"description"`
+	Visibility     *string    `db:"visibility" json:"visibility"`
+	TeamID         *uuid.UUID `db:"team_id" json:"teamId"`
+	IsArchived     *bool      `db:"is_archived" json:"isArchived"`
 }
 
 func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (Project, error) {
 	row := q.db.QueryRow(ctx, updateProject,
 		arg.ID,
+		arg.OrganizationID,
 		arg.Name,
 		arg.Description,
 		arg.Visibility,

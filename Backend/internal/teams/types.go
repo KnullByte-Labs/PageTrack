@@ -19,7 +19,7 @@ func (req *CreateTeamRequest) Validate() error {
 		return errors.New("organizationID is required")
 	}
 	req.Name = strings.TrimSpace(req.Name)
-	req.Slug = strings.TrimSpace(req.Slug)
+	req.Slug = strings.TrimSpace(strings.ToLower(req.Slug))
 
 	if req.Name == "" {
 		return errors.New("name is required")
