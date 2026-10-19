@@ -35,7 +35,6 @@ func (h *Handler) Routes() chi.Router {
 	router.Get("/{id}", h.GetByID)
 	router.Get("/slug/{slug}", h.GetBySlug)
 	router.Patch("/{id}", h.Update)
-	router.Delete("/{id}", h.Delete)
 
 	return router
 }
@@ -239,35 +238,4 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("Successfully updated the team details")
 	httputil.RespondJSON(w, http.StatusOK, team)
-}
-
-// handles DELETE /api/v1/teams/{id}?org_id={org_id}
-func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-	slog.Info("Initiating deletion of a team")
-
-	id, err := uuid.Parse(chi.URLParam(r, "id"))
-	if err != nil {
-		slog.Error("Invalid team id provided for deletion")
-		httputil.RespondError(w, http.StatusBadRequest, "Invalid team id provided for deletion")
-		return
-	}
-
-	orgID, err := uuid.Parse(r.URL.Query().Get("org_id"))
-	if err != nil {
-		slog.Error("Invalid organization ID provided")
-		httputil.RespondError(w, http.StatusBadRequest, "Invalid organization ID provided")
-		return
-	}
-
-	err = h.queries.DeleteTeam(r.Context(), database.DeleteTeamParams{
-		ID: 			id,
-		OrganizationID: orgID,
-	})
-	if err != nil {
-		slog.Error("Failed to delete team by ID", "error", err, "team_id", id, "org_id", orgID)
-		httputil.RespondError(w, http.StatusInternalServerError, "Failed to delete team by ID")
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
 }

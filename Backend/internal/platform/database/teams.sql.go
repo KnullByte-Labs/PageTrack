@@ -61,21 +61,6 @@ func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, e
 	return i, err
 }
 
-const deleteTeam = `-- name: DeleteTeam :exec
-DELETE FROM teams
-WHERE id = $1 AND organization_id = $2
-`
-
-type DeleteTeamParams struct {
-	ID             uuid.UUID `db:"id" json:"id"`
-	OrganizationID uuid.UUID `db:"organization_id" json:"organizationId"`
-}
-
-func (q *Queries) DeleteTeam(ctx context.Context, arg DeleteTeamParams) error {
-	_, err := q.db.Exec(ctx, deleteTeam, arg.ID, arg.OrganizationID)
-	return err
-}
-
 const getTeamByID = `-- name: GetTeamByID :one
 SELECT id, organization_id, name, slug, idp_group_path, created_at, updated_at
 FROM teams

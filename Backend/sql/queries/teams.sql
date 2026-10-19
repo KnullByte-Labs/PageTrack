@@ -38,6 +38,4 @@ SET
 WHERE id = $1 AND organization_id = $2
 RETURNING id, organization_id, name, slug, idp_group_path, created_at, updated_at;
 
--- name: DeleteTeam :exec
-DELETE FROM teams
-WHERE id = $1 AND organization_id = $2;
+

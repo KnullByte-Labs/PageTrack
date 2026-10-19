@@ -55,6 +55,3 @@ WHERE id = $1
 RETURNING id, organization_id, project_id, section_id, parent_id, title, slug, path, position,
 current_published_version, has_draft, is_restricted, is_archived, created_by, created_at, updated_at;
 
--- name: DeletePage :exec
-DELETE FROM pages
-WHERE id = $1;

@@ -97,16 +97,6 @@ func (q *Queries) CreatePage(ctx context.Context, arg CreatePageParams) (Page, e
 	return i, err
 }
 
-const deletePage = `-- name: DeletePage :exec
-DELETE FROM pages
-WHERE id = $1
-`
-
-func (q *Queries) DeletePage(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deletePage, id)
-	return err
-}
-
 const getPageByID = `-- name: GetPageByID :one
 SELECT id, organization_id, project_id, section_id, parent_id, title, slug, path, position,
 current_published_version, has_draft, is_restricted, is_archived, created_by, created_at, updated_at
