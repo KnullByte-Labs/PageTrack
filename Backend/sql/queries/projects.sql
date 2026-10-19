@@ -43,6 +43,3 @@ SET
 WHERE id = $1 AND organization_id = $2
 RETURNING id, organization_id, team_id, name, slug, description, visibility, is_archived, created_at, updated_at;
 
--- name: DeleteProject :exec
-DELETE FROM projects
-WHERE id = $1 AND organization_id = $2;

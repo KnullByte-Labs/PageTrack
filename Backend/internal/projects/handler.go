@@ -35,7 +35,6 @@ func (h *Handler) Routes() chi.Router {
 	router.Get("/{id}", h.GetByID)
 	router.Get("/slug/{slug}", h.GetBySlug)
 	router.Patch("/{id}", h.Update)
-	router.Delete("/{id}", h.Delete)
 
 	return router
 }
@@ -244,35 +243,4 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("Successfully updated the project details")
 	httputil.RespondJSON(w, http.StatusOK, project)
-}
-
-// handles DELETE /api/v1/projects/{id}?ord_id={org_id}
-func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-	slog.Info("Deleting the projects entry from database.....")
-
-	id, err := uuid.Parse(chi.URLParam(r, "id"))
-	if err != nil {
-		slog.Error("Invalid ID provided")
-		httputil.RespondError(w, http.StatusBadRequest, "invalid team id provided")
-		return
-	}
-
-	orgID, err := uuid.Parse(r.URL.Query().Get("org_id"))
-	if err != nil {
-		slog.Error("Invalid Organization ID provided")
-		httputil.RespondError(w, http.StatusBadRequest, "invalid organization id provided")
-		return
-	}
-
-	err = h.queries.DeleteProject(r.Context(), database.DeleteProjectParams{
-		OrganizationID: 	orgID,
-		ID: 				id,
-	})
-	if err != nil {
-		slog.Error("Failed to delete project entry by ID", "error", err, "project_id", id, "org_id", orgID)
-		httputil.RespondError(w, http.StatusInternalServerError, "Failed to delete project entry by ID")
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
 }

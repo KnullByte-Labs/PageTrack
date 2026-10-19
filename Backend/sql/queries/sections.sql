@@ -30,6 +30,4 @@ SET
 WHERE id = $1
 RETURNING id, organization_id, project_id, name, slug, position, created_at, updated_at;
 
--- name: DeleteSection :exec
-DELETE FROM sections
-WHERE id = $1;
+

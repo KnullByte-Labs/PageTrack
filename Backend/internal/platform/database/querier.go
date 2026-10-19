@@ -21,11 +21,6 @@ type Querier interface {
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateSection(ctx context.Context, arg CreateSectionParams) (Section, error)
 	CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, error)
-	DeleteOrganization(ctx context.Context, id uuid.UUID) error
-	DeletePage(ctx context.Context, id uuid.UUID) error
-	DeleteProject(ctx context.Context, arg DeleteProjectParams) error
-	DeleteSection(ctx context.Context, id uuid.UUID) error
-	DeleteTeam(ctx context.Context, arg DeleteTeamParams) error
 	GetOrganizationByID(ctx context.Context, id uuid.UUID) (Organization, error)
 	GetOrganizationBySlug(ctx context.Context, slug string) (Organization, error)
 	GetPageByID(ctx context.Context, id uuid.UUID) (Page, error)

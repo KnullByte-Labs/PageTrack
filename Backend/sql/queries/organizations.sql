@@ -42,6 +42,4 @@ SET
 WHERE id = $1
 RETURNING id, slug, name, display_name, image_url, live_url, description, created_at, updated_at;
 
--- name: DeleteOrganization :exec
-DELETE FROM organizations
-WHERE id = $1;
+

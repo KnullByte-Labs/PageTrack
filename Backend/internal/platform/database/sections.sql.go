@@ -54,16 +54,6 @@ func (q *Queries) CreateSection(ctx context.Context, arg CreateSectionParams) (S
 	return i, err
 }
 
-const deleteSection = `-- name: DeleteSection :exec
-DELETE FROM sections
-WHERE id = $1
-`
-
-func (q *Queries) DeleteSection(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteSection, id)
-	return err
-}
-
 const getSectionByID = `-- name: GetSectionByID :one
 SELECT id, organization_id, project_id, name, slug, position, created_at, updated_at
 FROM sections
